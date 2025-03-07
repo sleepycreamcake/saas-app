@@ -1,7 +1,10 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import supabase from "../../lib/supabase";
 
 export default function Auth() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -55,6 +58,12 @@ export default function Auth() {
       if (res.ok) {
         console.log("✅ Login successful:", result);
         setMessage("Login successful!");
+        await supabase.auth.setSession({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token,
+        });
+        // if login success, jump to dashboard
+        router.push("/dashboard");
       } else {
         console.error("❌ Login failed:", result.error);
         setMessage(result.error);

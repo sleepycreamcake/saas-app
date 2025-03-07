@@ -20,14 +20,17 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: error.message });
   }
 
-  const user = data.user;
-  if (!user || !user.id) {
+  const { user, session } = data;
+
+  if (!user || !user.id || !session) {
     return res.status(400).json({ error: "Login failed or user missing" });
   }
 
   console.log("✅ Login successful:", user);
 
   // make sure user exists in 'users' table
+  console.log("📢 Checking if user exists in 'users' table...");
+
   const { data: existingUser, error: userCheckError } = await supabase
     .from("users")
     .select("id")
@@ -55,5 +58,19 @@ export default async function handler(req, res) {
     console.log("✅ User inserted into users table:", user);
   }
 
-  res.status(200).json({ user: data });
+  // make sure the session exists
+  console.log("📢 Storing session...");
+  const { error: sessionError } = await supabase.auth.setSession({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  });
+
+  if (sessionError) {
+    console.error("❌ Failed to set session:", sessionError.message);
+    return res.status(500).json({ error: "Failed to set session" });
+  }
+
+  console.log("✅ Session stored successfully!");
+
+  res.status(200).json({ user: data.user, session: session });
 }
