@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -47,8 +48,14 @@ export default function Home() {
           >
             Read our docs
           </a>
+          <Link href="/auth">
+            <button className="rounded-full border border-solid border-blue-500 transition-colors flex items-center justify-center bg-blue-500 text-white text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44 hover:bg-blue-600">
+              Go to Auth
+            </button>
+          </Link>
         </div>
       </main>
+
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
         <a
           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
