@@ -1,66 +1,98 @@
-"use client";
-import { useState, useEffect } from "react";
-import { User } from "@supabase/supabase-js";
-import supabase from "../../lib/supabase";
-import { useRouter } from "next/navigation";
+'use client';
 
-export default function Dashboard() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+
+type Profile = {
+  username: string;
+  email: string;
+};
+
+export default function DashboardPage() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
 
-  // get the session
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [inputUrl, setInputUrl] = useState('');
+
   useEffect(() => {
-    const fetchUser = async () => {
-      console.log("📢 Fetching user...");
-  
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user) {
-        console.error("❌ User not found, redirecting...");
-        router.push("/auth");
-      } else {
-        console.log("✅ User fetched:", data.user);
-        setUser(data.user);
+    const loadProfile = async () => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        router.push('/login');
+        return;
       }
-  
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, email')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Failed to load profile:', error.message);
+        setProfile(null);
+      } else {
+        setProfile(data);
+      }
+
       setLoading(false);
     };
-  
-    fetchUser();
-  }, []);
-  
+
+    loadProfile();
+  }, [supabase, router]);
 
   const handleLogout = async () => {
-    setLoading(true);
-
-    console.log("📢 Logging out...");
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      console.error("❌ Logout failed:", error.message);
-    } else {
-      console.log("✅ User logged out successfully!");
-      setUser(null);
-      router.push("/auth"); // logout and go back to login page
-    }
-
-    setLoading(false);
+    await supabase.auth.signOut();
+    router.push('/login');
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="text-center mt-10">Loading...</p>;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      {user ? (
-        <>
-          <h1 className="text-2xl font-bold mb-4">Welcome, {user.email}!</h1>
-          <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 rounded">
-            Logout
-          </button>
-        </>
-      ) : (
-        <p>No user found. Please log in.</p>
-      )}
+    <div className="min-h-screen bg-white relative">
+      {/* 右上角浮动菜单 */}
+      <div className="absolute top-4 right-4 bg-gray-100 border px-4 py-3 rounded-md text-sm shadow space-y-2">
+        <p><strong>Subscription:</strong> Free</p>
+        <p><strong>Account Wallet:</strong> $0</p>
+        <button
+          onClick={handleLogout}
+          className="w-full bg-black text-white py-1.5 rounded-md hover:opacity-90 transition text-sm"
+        >
+          Log Out
+        </button>
+      </div>
+
+      {/* 主体内容 */}
+      <div className="flex items-center justify-center h-full pt-20">
+        <div className="w-full max-w-xl border px-8 py-10 rounded-md shadow">
+          <h1 className="text-xl font-semibold mb-6">
+            Welcome, {profile?.username ?? 'User'}
+          </h1>
+
+          <label htmlFor="competitorUrl" className="block text-gray-700 mb-1">
+            Please type the competitor's website:
+          </label>
+          <input
+            id="competitorUrl"
+            type="text"
+            placeholder="ex. https://www.example.com"
+            value={inputUrl}
+            onChange={(e) => setInputUrl(e.target.value)}
+            className="w-full mb-4 px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-black"
+          />
+
+          <p className="text-gray-500 text-sm">
+            The result will send to your email!
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
