@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [inputUrl, setInputUrl] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -53,12 +54,53 @@ export default function DashboardPage() {
     router.push('/login');
   };
 
+  const normalizeUrl = (input: string) => {
+    if (!input.startsWith('http://') && !input.startsWith('https://')) {
+      return 'https://' + input;
+    }
+    return input;
+  };
+
+  const isValidFacebookUrl = (url: string) => {
+    try {
+      const parsed = new URL(url);
+      return parsed.hostname.includes('facebook.com');
+    } catch {
+      return false;
+    }
+  };
+
+const handleAnalyze = async () => {
+  setError(null);
+
+  const fullUrl = normalizeUrl(inputUrl);
+
+  if (!isValidFacebookUrl(fullUrl)) {
+    setError('Please enter a valid Facebook link.');
+    return;
+  }
+
+  console.log('✅ Valid Facebook URL:', fullUrl);
+
+  // 🔁 模拟 ChatGPT 分析结果
+  const mockResult = `
+    📊 Analysis of ${fullUrl}:
+    - Page appears to represent a medium-sized business.
+    - Last post was 2 days ago, indicating active engagement.
+    - Page has over 10,000 followers.
+    - Focuses on product promotions, with decent interaction rates.
+  `;
+
+  console.log('💡 Mock Analysis Result:', mockResult.trim());
+};
+
+
   if (loading) return <p className="text-center mt-10">Loading...</p>;
 
   return (
     <div className="min-h-screen bg-white relative">
       {/* 右上角浮动菜单 */}
-      <div className="absolute top-4 right-4 bg-gray-100 border px-4 py-3 rounded-md text-sm shadow space-y-2">
+      <div className="absolute top-4 right-4 bg-gray-100 border px-4 py-3 rounded-md text-sm shadow space-y-2 text-right">
         <p><strong>Subscription:</strong> Free</p>
         <p><strong>Account Wallet:</strong> $0</p>
         <button
@@ -82,15 +124,26 @@ export default function DashboardPage() {
           <input
             id="competitorUrl"
             type="text"
-            placeholder="ex. https://www.example.com"
+            placeholder="ex. https://www.facebook.com/somepage"
             value={inputUrl}
             onChange={(e) => setInputUrl(e.target.value)}
             className="w-full mb-4 px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-black"
           />
 
-          <p className="text-gray-500 text-sm">
-            The result will send to your email!
+          <p className="text-gray-500 text-sm mb-4">
+            The result will be sent to your email!
           </p>
+
+          <button
+            onClick={handleAnalyze}
+            className="w-full bg-black text-white py-2 rounded-md hover:opacity-90 transition"
+          >
+            Analyze
+          </button>
+
+          {error && (
+            <p className="text-red-500 text-sm mt-4 text-center">{error}</p>
+          )}
         </div>
       </div>
     </div>
