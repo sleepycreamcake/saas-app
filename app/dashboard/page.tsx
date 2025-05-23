@@ -1,4 +1,4 @@
-'use client';
+'use client'
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,13 @@ type Profile = {
   email: string;
 };
 
+type AnalysisResult = {
+  result?: string;
+  error?: string;
+  details?: string;
+  responseStructure?: any;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
@@ -17,6 +24,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [inputUrl, setInputUrl] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -70,30 +80,61 @@ export default function DashboardPage() {
     }
   };
 
-const handleAnalyze = async () => {
-  setError(null);
+  const handleAnalyze = async () => {
+    setError(null);
+    setStatusMessage('');
+    setAnalysisResult(null);
+    setIsAnalyzing(true);
 
-  const fullUrl = normalizeUrl(inputUrl);
+    const fullUrl = normalizeUrl(inputUrl);
 
-  if (!isValidFacebookUrl(fullUrl)) {
-    setError('Please enter a valid Facebook link.');
-    return;
-  }
+    if (!isValidFacebookUrl(fullUrl)) {
+      setError('Please enter a valid Facebook link.');
+      setIsAnalyzing(false);
+      return;
+    }
 
-  console.log('✅ Valid Facebook URL:', fullUrl);
+    console.log('✅ Valid Facebook URL:', fullUrl);
+    setStatusMessage('🔄 Analyzing Facebook page... This may take up to 30 seconds.');
 
-  // 🔁 模拟 ChatGPT 分析结果
-  const mockResult = `
-    📊 Analysis of ${fullUrl}:
-    - Page appears to represent a medium-sized business.
-    - Last post was 2 days ago, indicating active engagement.
-    - Page has over 10,000 followers.
-    - Focuses on product promotions, with decent interaction rates.
-  `;
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ url: fullUrl }),
+      });
 
-  console.log('💡 Mock Analysis Result:', mockResult.trim());
-};
+      const data: AnalysisResult = await response.json();
 
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to analyze URL');
+      }
+
+      if (data?.result) {
+        console.log('💡 Analysis Result:', data.result);
+        setStatusMessage('✅ Analysis complete!');
+        setAnalysisResult(data.result);
+      } else {
+        console.error('❌ API returned no result:', data.error || 'Unknown error');
+        setStatusMessage('❌ Failed to get analysis.');
+        
+        if (data.responseStructure) {
+          console.error('Response structure:', data.responseStructure);
+        }
+        
+        setError(data.error || 'Failed to analyze Facebook page. Please try again later.');
+      }
+    } catch (err: any) {
+      console.error('❌ API Error:', err);
+      setStatusMessage('❌ Error analyzing Facebook page.');
+      setError(err.message || 'An unexpected error occurred');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   if (loading) return <p className="text-center mt-10">Loading...</p>;
 
@@ -119,7 +160,7 @@ const handleAnalyze = async () => {
           </h1>
 
           <label htmlFor="competitorUrl" className="block text-gray-700 mb-1">
-            Please type the competitor's website:
+            Please type the competitor's Facebook page:
           </label>
           <input
             id="competitorUrl"
@@ -131,18 +172,36 @@ const handleAnalyze = async () => {
           />
 
           <p className="text-gray-500 text-sm mb-4">
-            The result will be sent to your email!
+            Analysis results will appear below once completed.
           </p>
 
           <button
             onClick={handleAnalyze}
-            className="w-full bg-black text-white py-2 rounded-md hover:opacity-90 transition"
+            disabled={isAnalyzing}
+            className={`w-full py-2 rounded-md transition ${
+              isAnalyzing
+                ? 'bg-gray-400 text-white cursor-not-allowed'
+                : 'bg-black text-white hover:opacity-90'
+            }`}
           >
-            Analyze
+            {isAnalyzing ? 'Analyzing...' : 'Analyze Page'}
           </button>
 
+          {statusMessage && (
+            <p className="mt-4 text-center text-sm text-blue-600">{statusMessage}</p>
+          )}
+
           {error && (
-            <p className="text-red-500 text-sm mt-4 text-center">{error}</p>
+            <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
+          )}
+
+          {analysisResult && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-md border">
+              <h3 className="font-semibold mb-2">Analysis Results:</h3>
+              <div className="whitespace-pre-line text-sm">
+                {analysisResult}
+              </div>
+            </div>
           )}
         </div>
       </div>
