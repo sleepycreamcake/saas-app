@@ -107,8 +107,6 @@ Recommended: [Vercel](https://vercel.com/)
 ## ✅ Next Steps
 
 - [ ] Build `/dashboard` to display user info
-- [ ] Add `middleware.ts` for route protection
-- [ ] Use `onAuthStateChange()` to track auth state
 - [ ] Integrate Stripe subscriptions
 - [ ] Add user profile edit page
 - [ ] Improve UI/UX with shadcn/ui or Tailwind CSS
