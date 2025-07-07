@@ -11,10 +11,12 @@ export default function SignupPage() {
   const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
 
+  // Update input fields for signup
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Handle signup and store username in user_metadata
   const handleSignup = async () => {
     setError(null);
     const { data, error } = await supabase.auth.signUp({
@@ -30,7 +32,7 @@ export default function SignupPage() {
     if (error) {
       setError(error.message);
     } else {
-      router.push('/dashboard');
+      router.push('/dashboard'); // Redirect to dashboard after successful signup
     }
   };
 
@@ -43,6 +45,7 @@ export default function SignupPage() {
       <div className="w-full max-w-md px-8 py-10 shadow-md rounded-md border border-gray-200">
         <h1 className="text-2xl font-semibold text-center mb-8">Create Account</h1>
 
+        {/* Username field */}
         <div className="mb-4">
           <label htmlFor="username" className="block mb-1 text-gray-700">
             Username:
@@ -57,6 +60,7 @@ export default function SignupPage() {
           />
         </div>
 
+        {/* Email field */}
         <div className="mb-4">
           <label htmlFor="email" className="block mb-1 text-gray-700">
             Email:
@@ -72,6 +76,7 @@ export default function SignupPage() {
           />
         </div>
 
+        {/* Password field */}
         <div className="mb-6">
           <label htmlFor="password" className="block mb-1 text-gray-700">
             Password:
@@ -87,6 +92,7 @@ export default function SignupPage() {
           />
         </div>
 
+        {/* Sign up button */}
         <button
           onClick={handleSignup}
           className="w-full bg-black text-white py-2 rounded-md hover:opacity-90 transition"
@@ -94,6 +100,7 @@ export default function SignupPage() {
           Sign Up
         </button>
 
+        {/* Go back to login */}
         <button
           onClick={handleGoToLogin}
           className="w-full border border-black text-black py-2 rounded-md mt-4 hover:bg-gray-100 transition"
@@ -101,6 +108,7 @@ export default function SignupPage() {
           Back to Login
         </button>
 
+        {/* Display signup error */}
         {error && <p className="mt-4 text-red-500 text-sm text-center">{error}</p>}
       </div>
     </div>

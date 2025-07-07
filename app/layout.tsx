@@ -1,9 +1,12 @@
+// This is the root layout of the Next.js App Router
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+// Import the Supabase client for initialization
 import supabase from "../lib/supabase";
 
+// Load Google fonts with CSS variables
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -25,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   console.log("📢 Supabase in RootLayout:", supabase);
-  
+
   return (
     <html lang="en">
       <body

@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [statusMessage, setStatusMessage] = useState('');
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
+  // Load user profile from Supabase after verifying authentication
   useEffect(() => {
     const loadProfile = async () => {
       const {
@@ -36,7 +37,7 @@ export default function DashboardPage() {
       } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        router.push('/login');
+        router.push('/login'); // Redirect if not authenticated
         return;
       }
 
@@ -59,11 +60,13 @@ export default function DashboardPage() {
     loadProfile();
   }, [supabase, router]);
 
+  // Handle logout and redirect to login
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
   };
 
+  // Normalize URL to ensure it includes protocol
   const normalizeUrl = (input: string) => {
     if (!input.startsWith('http://') && !input.startsWith('https://')) {
       return 'https://' + input;
@@ -71,6 +74,7 @@ export default function DashboardPage() {
     return input;
   };
 
+  // Validate if the URL is a Facebook domain
   const isValidFacebookUrl = (url: string) => {
     try {
       const parsed = new URL(url);
@@ -80,6 +84,7 @@ export default function DashboardPage() {
     }
   };
 
+  // Trigger analysis request
   const handleAnalyze = async () => {
     setError(null);
     setStatusMessage('');
@@ -120,11 +125,11 @@ export default function DashboardPage() {
       } else {
         console.error('❌ API returned no result:', data.error || 'Unknown error');
         setStatusMessage('❌ Failed to get analysis.');
-        
+
         if (data.responseStructure) {
           console.error('Response structure:', data.responseStructure);
         }
-        
+
         setError(data.error || 'Failed to analyze Facebook page. Please try again later.');
       }
     } catch (err: any) {
@@ -140,7 +145,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-white relative">
-      {/* 右上角浮动菜单 */}
+      {/* Floating account/logout box */}
       <div className="absolute top-4 right-4 bg-gray-100 border px-4 py-3 rounded-md text-sm shadow space-y-2 text-right">
         <p><strong>Subscription:</strong> Free</p>
         <p><strong>Account Wallet:</strong> $0</p>
@@ -152,13 +157,14 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* 主体内容 */}
+      {/* Main dashboard content */}
       <div className="flex items-center justify-center h-full pt-20">
         <div className="w-full max-w-xl border px-8 py-10 rounded-md shadow">
           <h1 className="text-xl font-semibold mb-6">
             Welcome, {profile?.username ?? 'User'}
           </h1>
 
+          {/* Input for Facebook page URL */}
           <label htmlFor="competitorUrl" className="block text-gray-700 mb-1">
             Please type the competitor's Facebook page:
           </label>
@@ -175,6 +181,7 @@ export default function DashboardPage() {
             Analysis results will appear below once completed.
           </p>
 
+          {/* Analyze button */}
           <button
             onClick={handleAnalyze}
             disabled={isAnalyzing}
@@ -187,6 +194,7 @@ export default function DashboardPage() {
             {isAnalyzing ? 'Analyzing...' : 'Analyze Page'}
           </button>
 
+          {/* Status and error messages */}
           {statusMessage && (
             <p className="mt-4 text-center text-sm text-blue-600">{statusMessage}</p>
           )}
@@ -195,6 +203,7 @@ export default function DashboardPage() {
             <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
           )}
 
+          {/* Result box */}
           {analysisResult && (
             <div className="mt-6 p-4 bg-gray-50 rounded-md border">
               <h3 className="font-semibold mb-2">Analysis Results:</h3>
